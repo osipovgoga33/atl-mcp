@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.2] — 2026-11-09
+
+- `jira_worklog_update` — edit your own worklog: time, start, comment. The server
+  reads the worklog and the current user first and refuses someone else's
+  worklog before any write. Until now a wrong worklog could only be fixed in
+  the Jira UI.
+- `adjust_estimate` for `jira_worklog_add` and `jira_worklog_update`: `auto`
+  (Jira reduces the remaining estimate, the default), `leave`, or `new` with
+  `new_estimate`. A lead's overhead hours on someone else's issue should not
+  always eat the developer's remaining estimate.
+- `conf_page` reads large pages in parts: `offset` — from which character, the
+  answer names the next offset; `find` — fragments around every match (an issue
+  key, or a change colour like `rgb(255,0,0)` in `storage`). A 110 KB spec used
+  to be cut at 60 000 characters with no way to read the rest.
+- `jira_bulk_update` compares array fields (components, versions) the way Jira
+  returns them. Before, `components` from the arguments never matched the stored
+  value, so a repeated call rewrote the same components.
+- Issue links (`issuelinks` in `jira_search`) are shown in one line —
+  `[id] parent ERP-1 | status | summary` — instead of ~1.5 KB of JSON each.
+
 ## [0.4.1] — 2026-11-09
 
 - Bulk actions have a time budget of 40 s. The client waits for an answer about
