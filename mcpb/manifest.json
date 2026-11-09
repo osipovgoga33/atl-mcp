@@ -1,0 +1,150 @@
+{
+  "manifest_version": "0.3",
+  "name": "atl-mcp",
+  "display_name": "Confluence + Jira (Server/DC)",
+  "version": "0.4.1",
+  "description": "Confluence и Jira Server / Data Center по персональному токену (PAT): спеки, задачи, переходы, трудозатраты, история и время в статусах, Agile, Service Desk.",
+  "author": {
+    "name": "GOSIPOV"
+  },
+  "server": {
+    "type": "binary",
+    "entry_point": "server/run.sh",
+    "mcp_config": {
+      "command": "/bin/sh",
+      "args": [
+        "${__dirname}/server/run.sh"
+      ],
+      "env": {
+        "ATL_CONF_URL": "${user_config.conf_url}",
+        "ATL_CONF_TOKEN": "${user_config.conf_token}",
+        "ATL_JIRA_URL": "${user_config.jira_url}",
+        "ATL_JIRA_TOKEN": "${user_config.jira_token}",
+        "ATL_ALLOW_WRITE": "${user_config.allow_write}",
+        "ATL_WRITE_SPACES": "${user_config.write_spaces}",
+        "ATL_JIRA_WRITE_PROJECTS": "${user_config.jira_write_projects}",
+        "ATL_DOWNLOAD_DIR": "${user_config.download_dir}",
+        "ATL_CA_FILE": "${user_config.ca_file}",
+        "ATL_CONF_INSECURE_TLS": "${user_config.conf_insecure_tls}",
+        "ATL_JIRA_INSECURE_TLS": "${user_config.jira_insecure_tls}"
+      },
+      "platform_overrides": {
+        "win32": {
+          "command": "${__dirname}/server/atl-mcp.exe",
+          "args": [],
+          "env": {
+            "ATL_CONF_URL": "${user_config.conf_url}",
+            "ATL_CONF_TOKEN": "${user_config.conf_token}",
+            "ATL_JIRA_URL": "${user_config.jira_url}",
+            "ATL_JIRA_TOKEN": "${user_config.jira_token}",
+            "ATL_ALLOW_WRITE": "${user_config.allow_write}",
+            "ATL_WRITE_SPACES": "${user_config.write_spaces}",
+            "ATL_JIRA_WRITE_PROJECTS": "${user_config.jira_write_projects}",
+            "ATL_DOWNLOAD_DIR": "${user_config.download_dir}",
+            "ATL_CA_FILE": "${user_config.ca_file}",
+            "ATL_CONF_INSECURE_TLS": "${user_config.conf_insecure_tls}",
+            "ATL_JIRA_INSECURE_TLS": "${user_config.jira_insecure_tls}"
+          }
+        }
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "atl",
+      "description": "Чтение: Confluence (поиск, страницы, комментарии, вложения), Jira (задачи, JQL, проекты, поля, переходы, история, время в статусах, трудозатраты, Agile, Dev Info, Service Desk)"
+    },
+    {
+      "name": "atl_write",
+      "description": "Запись (только при включённой записи): страницы и вложения Confluence; создание, правка, переходы (по одной и пакетом до 50 задач с предпросмотром), назначение, комментарии, трудозатраты, связи, спринты и версии Jira"
+    }
+  ],
+  "compatibility": {
+    "platforms": [
+      "win32",
+      "darwin",
+      "linux"
+    ]
+  },
+  "user_config": {
+    "conf_url": {
+      "type": "string",
+      "title": "Confluence URL",
+      "description": "Корень сервера, напр. https://wiki.example.com",
+      "required": false,
+      "default": ""
+    },
+    "conf_token": {
+      "type": "string",
+      "title": "Confluence PAT",
+      "description": "Профиль → Персональные токены доступа",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "jira_url": {
+      "type": "string",
+      "title": "Jira URL",
+      "description": "Корень сервера, напр. https://jira.example.com",
+      "required": false,
+      "default": ""
+    },
+    "jira_token": {
+      "type": "string",
+      "title": "Jira PAT",
+      "sensitive": true,
+      "required": false,
+      "default": "",
+      "description": "Профиль Jira → Персональные токены доступа"
+    },
+    "allow_write": {
+      "type": "boolean",
+      "title": "Разрешить запись",
+      "description": "Без этого сервер только читает",
+      "required": false,
+      "default": false
+    },
+    "write_spaces": {
+      "type": "string",
+      "title": "Пространства для записи",
+      "description": "Ключи через запятую; пусто — любые",
+      "required": false,
+      "default": ""
+    },
+    "jira_write_projects": {
+      "type": "string",
+      "title": "Проекты Jira для записи",
+      "description": "Ключи через запятую; пусто — любые",
+      "required": false,
+      "default": ""
+    },
+    "download_dir": {
+      "type": "string",
+      "title": "Папка загрузок",
+      "description": "Куда сохранять скачанные вложения; пусто — Загрузки/atl-mcp",
+      "required": false,
+      "default": ""
+    },
+    "ca_file": {
+      "type": "string",
+      "title": "Файл корпоративного сертификата",
+      "description": "Путь к .cer/.crt/.pem, если сервер подписан внутренним центром сертификации",
+      "required": false,
+      "default": ""
+    },
+    "conf_insecure_tls": {
+      "type": "boolean",
+      "title": "Confluence: не проверять сертификат",
+      "description": "Только если нет файла сертификата",
+      "required": false,
+      "default": false
+    },
+    "jira_insecure_tls": {
+      "type": "boolean",
+      "title": "Jira: не проверять сертификат",
+      "description": "Только если нет файла сертификата",
+      "required": false,
+      "default": false
+    }
+  }
+}
