@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "atl-mcp",
   "display_name": "Confluence + Jira (Server/DC)",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Confluence и Jira Server / Data Center по персональному токену (PAT): спеки, задачи, переходы, трудозатраты, история и время в статусах, Agile, Service Desk.",
   "author": {
     "name": "GOSIPOV"
