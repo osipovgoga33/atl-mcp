@@ -10,7 +10,7 @@ import (
 
 const (
 	serverName    = "atl-mcp"
-	serverVersion = "0.4.1"
+	serverVersion = "0.4.2"
 )
 
 type config struct {
