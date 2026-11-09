@@ -16,7 +16,7 @@ MCP-сервер на Go (только стандартная библиотек
 | action | параметры | что делает |
 |---|---|---|
 | `conf_search` | `text` / `title` / `space` или `cql`, `limit` | поиск страниц |
-| `conf_page` | `id` или `space`+`title`, `format` = `text` \| `storage` | страница; `storage` — исходный XHTML для правки, с `version` |
+| `conf_page` | `id` или `space`+`title`, `format` = `text` \| `storage`, `offset`, `find` | страница; `storage` — исходный XHTML для правки, с `version`. Большая страница — кусками (`offset`); `find` — фрагменты вокруг каждого вхождения |
 | `conf_children` | `id` | дочерние страницы |
 | `conf_spaces` | `limit` | пространства |
 | `conf_attachments` | `id` | вложения |
@@ -76,7 +76,8 @@ MCP-сервер на Go (только стандартная библиотек
 | `jira_bulk_transition` | `keys` [] или `jql` (до 50 задач), `transition`, `comment`, `resolution`, `fields`; `dry_run` — у каких задач переход доступен |
 | `jira_assign` | `key`, `user` (логин или `none`) |
 | `jira_comment` | `key`, `body`, `comment_id` — правка |
-| `jira_worklog_add` | `key`, `time_spent` (`1h 30m`), `started` (`2026-10-07 10:00`), `comment` |
+| `jira_worklog_add` | `key`, `time_spent` (`1h 30m`), `started` (`2026-10-07 10:00`), `comment`, `adjust_estimate` (`auto` \| `leave` \| `new` + `new_estimate`) |
+| `jira_worklog_update` | `key`, `worklog_id`, `time_spent`, `started`, `comment`, `adjust_estimate` — только свои записи |
 | `jira_link` / `jira_link_remove` | `inward_key`, `outward_key`, `link_type`, `comment` / `link_id` |
 | `jira_remote_link` | `key`, `url`, `title` — напр. ссылка на спеку в Confluence |
 | `jira_attach` | `key`, `path` / `content` / `content_base64`, `name` |
@@ -183,7 +184,7 @@ MCP-сервер на Go (только стандартная библиотек
 
 `atl-mcp.exe --version`; строка старта в
 `%APPDATA%\Claude\logs\mcp-server-<имя>.log`:
-`старт atl-mcp 0.4.1: confluence=... jira=... запись=...`.
+`старт atl-mcp 0.4.2: confluence=... jira=... запись=...`.
 
 ## Сборка
 
