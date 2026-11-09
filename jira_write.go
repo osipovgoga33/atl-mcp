@@ -294,34 +294,6 @@ func parseStarted(s string, now time.Time) (string, error) {
 	return "", fmt.Errorf("started: ГГГГ-ММ-ДД, ГГГГ-ММ-ДД ЧЧ:ММ или RFC3339")
 }
 
-func (t *toolset) jiraWorklogAdd(a args) (string, error) {
-	key, err := writableKey(t, a)
-	if err != nil {
-		return "", err
-	}
-	ts := a.str("time_spent")
-	if !reTimeSpent.MatchString(ts) {
-		return "", fmt.Errorf("time_spent в формате Jira: 1h 30m, 2d, 45m")
-	}
-	started, err := parseStarted(a.str("started"), time.Now())
-	if err != nil {
-		return "", err
-	}
-	body := map[string]any{"timeSpent": strings.TrimSpace(ts), "started": started}
-	if c := a.raw("comment"); c != "" {
-		body["comment"] = c
-	}
-	data, err := t.jira.do("POST", "/rest/api/2/issue/"+key+"/worklog", nil, body)
-	if err != nil {
-		return "", err
-	}
-	var w struct {
-		ID string `json:"id"`
-	}
-	_ = json.Unmarshal(data, &w)
-	return fmt.Sprintf("%s: списано %s (начало %s), запись %s", key, ts, started[:16], w.ID), nil
-}
-
 func (t *toolset) jiraLink(a args) (string, error) {
 	in, out := strings.ToUpper(a.str("inward_key")), strings.ToUpper(a.str("outward_key"))
 	if !reIssueKey.MatchString(in) || !reIssueKey.MatchString(out) {
