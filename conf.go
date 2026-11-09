@@ -197,15 +197,37 @@ func (t *toolset) confPage(a args) (string, error) {
 		fmt.Fprintf(&b, "метки: %s\n", strings.Join(ls, ", "))
 	}
 	fmt.Fprintf(&b, "url: %s\nформат: %s\n\n", t.confURL(page.Links.WebUI), format)
+	var body string
 	switch format {
 	case "storage":
-		b.WriteString(page.Body.Storage.Value)
+		body = page.Body.Storage.Value
 	case "text":
-		b.WriteString(storageToText(t.resolveUsers(page.Body.Storage.Value)))
+		body = storageToText(t.resolveUsers(page.Body.Storage.Value))
 	default:
 		return "", fmt.Errorf("format: text или storage")
 	}
-	return truncate(b.String(), "Страница слишком велика для одного ответа; для правки целиком её нельзя использовать — сообщи пользователю."), nil
+	if find := a.raw("find"); find != "" {
+		b.WriteString(findFragments(body, find))
+		return truncate(b.String(), "Совпадений слишком много — уточни find."), nil
+	}
+	off, _ := a.num("offset")
+	head := []rune(b.String())
+	r := []rune(body)
+	if off < 0 || (off > 0 && off >= len(r)) {
+		return "", fmt.Errorf("offset вне страницы: в теле %d символов", len(r))
+	}
+	room := maxOut - len(head) - 200
+	if off == 0 && len(r) <= room {
+		b.WriteString(body)
+		return b.String(), nil
+	}
+	end := min(off+room, len(r))
+	fmt.Fprintf(&b, "[фрагмент: символы %d–%d из %d]\n", off, end, len(r))
+	b.WriteString(string(r[off:end]))
+	if end < len(r) {
+		fmt.Fprintf(&b, "\n\n[ПРОДОЛЖЕНИЕ: тот же вызов с offset=%d. Для правки целиком страница не годится — нужен весь текст.]", end)
+	}
+	return b.String(), nil
 }
 
 func (t *toolset) confChildren(a args) (string, error) {
@@ -470,4 +492,40 @@ func (t *toolset) resolveUsers(s string) string {
 		}
 		return "@" + html.EscapeString(name)
 	})
+}
+
+// findFragments — куски тела вокруг каждого вхождения find (без учёта регистра):
+// так в большой ФС находятся правки по задаче — по её номеру или по цвету
+// выделения (в storage: style="color: rgb(255,0,0)").
+func findFragments(body, find string) string {
+	const around, maxHits = 1500, 20
+	low, pat := []rune(strings.ToLower(body)), []rune(strings.ToLower(find))
+	r := []rune(body)
+	var b strings.Builder
+	hits, lastEnd := 0, -1
+	for i := 0; i+len(pat) <= len(low); i++ {
+		if string(low[i:i+len(pat)]) != string(pat) {
+			continue
+		}
+		hits++
+		if hits > maxHits {
+			continue
+		}
+		from, to := max(0, i-around), min(len(r), i+len(pat)+around)
+		if from < lastEnd {
+			from = lastEnd
+		}
+		if from < to {
+			fmt.Fprintf(&b, "--- символы %d–%d (совпадение на %d) ---\n%s\n", from, to, i, string(r[from:to]))
+			lastEnd = to
+		}
+	}
+	if hits == 0 {
+		return fmt.Sprintf("«%s» на странице не найдено (в теле %d символов).", find, len(r))
+	}
+	head := fmt.Sprintf("совпадений «%s»: %d", find, hits)
+	if hits > maxHits {
+		head += fmt.Sprintf(" (показаны первые %d)", maxHits)
+	}
+	return head + "\n" + b.String()
 }
