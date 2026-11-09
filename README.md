@@ -16,7 +16,7 @@ enabled). Both take an `action` parameter.
 | action | parameters | what it does |
 |---|---|---|
 | `conf_search` | `text` / `title` / `space` or `cql`, `limit` | page search |
-| `conf_page` | `id` or `space`+`title`, `format` = `text` \| `storage` | a page; `storage` is the source XHTML for editing, with `version` |
+| `conf_page` | `id` or `space`+`title`, `format` = `text` \| `storage`, `offset`, `find` | a page; `storage` is the source XHTML for editing, with `version`. A large page comes in parts (`offset`); `find` returns fragments around every match |
 | `conf_children` | `id` | child pages |
 | `conf_spaces` | `limit` | spaces |
 | `conf_attachments` | `id` | attachments |
@@ -76,7 +76,8 @@ enabled). Both take an `action` parameter.
 | `jira_bulk_transition` | `keys` [] or `jql` (up to 50 issues), `transition`, `comment`, `resolution`, `fields`; `dry_run` — where the transition is available |
 | `jira_assign` | `key`, `user` (login or `none`) |
 | `jira_comment` | `key`, `body`, `comment_id` — edit |
-| `jira_worklog_add` | `key`, `time_spent` (`1h 30m`), `started` (`2026-10-07 10:00`), `comment` |
+| `jira_worklog_add` | `key`, `time_spent` (`1h 30m`), `started` (`2026-10-07 10:00`), `comment`, `adjust_estimate` (`auto` \| `leave` \| `new` + `new_estimate`) |
+| `jira_worklog_update` | `key`, `worklog_id`, `time_spent`, `started`, `comment`, `adjust_estimate` — your own worklogs only |
 | `jira_link` / `jira_link_remove` | `inward_key`, `outward_key`, `link_type`, `comment` / `link_id` |
 | `jira_remote_link` | `key`, `url`, `title` — e.g. a link to a spec in Confluence |
 | `jira_attach` | `key`, `path` / `content` / `content_base64`, `name` |
@@ -177,7 +178,7 @@ binary and other variables.
 
 `atl-mcp.exe --version`; the start line in
 `%APPDATA%\Claude\logs\mcp-server-<name>.log`:
-`старт atl-mcp 0.4.1: confluence=... jira=... запись=...`.
+`старт atl-mcp 0.4.2: confluence=... jira=... запись=...`.
 
 ## Build
 
