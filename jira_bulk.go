@@ -120,6 +120,21 @@ func shortTitle(is bulkIssue) string {
 	return string(s)
 }
 
+// generic — значение из аргументов в том же виде, в каком Jira отдаёт поле
+// (map[string]any / []any). Без этого компоненты из аргументов ([]map) печатались
+// JSON-ом и не совпадали с прочитанными: повтор пакета перезаписывал то же самое.
+func generic(v any) any {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return v
+	}
+	var out any
+	if json.Unmarshal(b, &out) != nil {
+		return v
+	}
+	return out
+}
+
 func showVal(v any) string {
 	if s := jiraVal(v); s != "" {
 		return s
@@ -178,7 +193,7 @@ func (t *toolset) jiraBulkUpdate(a args) (string, error) {
 		diff := []string{}
 		changed := len(update) > 0
 		for _, k := range names {
-			was, now := showVal(is.Fields[k]), showVal(fields[k])
+			was, now := showVal(is.Fields[k]), showVal(generic(fields[k]))
 			if was != now {
 				changed = true
 			}
