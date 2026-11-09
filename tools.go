@@ -39,7 +39,7 @@ var (
 const readDescription = `Чтение Confluence и Jira (Server/DC). Параметр action.
 CONFLUENCE:
 - conf_search: text и/или title, space, или свой cql; limit (≤100).
-- conf_page: id ИЛИ space+title; format = text (по умолч.) | storage (исходный XHTML — нужен перед правкой). Возвращает version.
+- conf_page: id ИЛИ space+title; format = text (по умолч.) | storage (исходный XHTML — нужен перед правкой). Возвращает version. Большая страница — кусками: offset (с какого символа, ответ подскажет следующий). find — куски вокруг каждого вхождения текста (номер задачи, цвет правок вида rgb(255,0,0) в storage).
 - conf_children: id. conf_spaces: limit. conf_attachments: id. conf_comments: id.
 - conf_download: id, name — скачать вложение в папку загрузок.
 JIRA:
@@ -71,7 +71,8 @@ JIRA (тексты — вики-разметка Jira):
 - jira_transition: key, transition (id, название или целевой статус), comment, resolution, fields {}.
 - jira_bulk_transition: keys [] ИЛИ jql (до 50 задач), transition, comment, resolution, fields {}; dry_run=true — у каких задач переход доступен. Уже в целевом статусе — пропуск.
 - jira_assign: key, user (логин или none). jira_comment: key, body, comment_id (правка своего).
-- jira_worklog_add: key, time_spent ("1h 30m"), started ("2026-10-07 10:00"), comment.
+- jira_worklog_add: key, time_spent ("1h 30m"), started ("2026-10-07 10:00"), comment, adjust_estimate (auto — остаток уменьшит Jira, по умолчанию | leave — не трогать | new + new_estimate).
+- jira_worklog_update: key, worklog_id (из jira_worklog), time_spent, started, comment, adjust_estimate/new_estimate — только свои записи.
 - jira_link: inward_key, outward_key, link_type, comment. jira_link_remove: link_id (из jira_issue).
 - jira_remote_link: key, url, title — напр. ссылка на спеку в Confluence.
 - jira_attach: key, path | content | content_base64, name.
@@ -109,7 +110,7 @@ func (t *toolset) writeActions() ([]string, map[string]action) {
 		"conf_attach": t.confAttach, "conf_comment": t.confComment, "conf_move": t.confMove,
 		"jira_create": t.jiraCreate, "jira_update": t.jiraUpdate, "jira_transition": t.jiraTransition,
 		"jira_bulk_update": t.jiraBulkUpdate, "jira_bulk_transition": t.jiraBulkTransition,
-		"jira_assign": t.jiraAssign, "jira_comment": t.jiraComment, "jira_worklog_add": t.jiraWorklogAdd,
+		"jira_assign": t.jiraAssign, "jira_comment": t.jiraComment, "jira_worklog_add": t.jiraWorklogAdd, "jira_worklog_update": t.jiraWorklogUpdate,
 		"jira_link": t.jiraLink, "jira_link_remove": t.jiraLinkRemove, "jira_remote_link": t.jiraRemoteLink,
 		"jira_attach":         t.jiraAttach,
 		"jira_watcher_add":    func(a args) (string, error) { return t.jiraWatcher(a, true) },
@@ -118,7 +119,7 @@ func (t *toolset) writeActions() ([]string, map[string]action) {
 		"jira_version_create": t.jiraVersionCreate,
 	}
 	order := []string{"conf_create", "conf_update", "conf_label", "conf_attach", "conf_comment", "conf_move",
-		"jira_create", "jira_update", "jira_bulk_update", "jira_transition", "jira_bulk_transition", "jira_assign", "jira_comment", "jira_worklog_add",
+		"jira_create", "jira_update", "jira_bulk_update", "jira_transition", "jira_bulk_transition", "jira_assign", "jira_comment", "jira_worklog_add", "jira_worklog_update",
 		"jira_link", "jira_link_remove", "jira_remote_link", "jira_attach", "jira_watcher_add", "jira_watcher_remove",
 		"jira_sprint_add", "jira_backlog", "jira_sprint_create", "jira_version_create"}
 	return order, m
@@ -132,7 +133,7 @@ func props(names ...string) map[string]any {
 			p[n] = map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
 		case "comments", "minor_edit", "allow_shrink", "all", "dry_run":
 			p[n] = map[string]any{"type": "boolean"}
-		case "limit", "version", "start_at":
+		case "limit", "version", "start_at", "offset":
 			p[n] = map[string]any{"type": "integer"}
 		default:
 			p[n] = map[string]any{"type": "string"}
@@ -145,7 +146,7 @@ func (t *toolset) list() []map[string]any {
 	rOrder, _ := t.readActions()
 	rp := props("id", "space", "title", "text", "cql", "format", "name", "key", "jql", "fields", "comments", "limit",
 		"start_at", "project", "issuetype", "field", "attachment_id", "all", "board_id", "sprint_id", "state", "type",
-		"desk_id", "queue_id")
+		"desk_id", "queue_id", "offset", "find")
 	rp["action"] = map[string]any{"type": "string", "enum": rOrder}
 	rp["format"] = map[string]any{"type": "string", "enum": []string{"text", "storage"}}
 	read := map[string]any{
@@ -161,8 +162,9 @@ func (t *toolset) list() []map[string]any {
 			"project", "issuetype", "summary", "description", "priority", "assignee", "components", "fix_versions", "due_date",
 			"parent", "transition", "comment", "resolution", "user", "comment_id", "time_spent", "started",
 			"inward_key", "outward_key", "link_type", "link_id", "url", "keys", "sprint_id", "board_id",
-			"start_date", "end_date", "goal", "release_date", "jql", "dry_run")
+			"start_date", "end_date", "goal", "release_date", "jql", "dry_run", "worklog_id", "adjust_estimate", "new_estimate")
 		wp["action"] = map[string]any{"type": "string", "enum": wOrder}
+		wp["adjust_estimate"] = map[string]any{"type": "string", "enum": []string{"auto", "leave", "new"}}
 		wp["fields"] = map[string]any{"type": "object", "description": "Поля Jira как есть, напр. {\"customfield_10100\": \"x\"}"}
 		wp["update"] = map[string]any{"type": "object", "description": "Операции update Jira"}
 		tools = append(tools, map[string]any{
