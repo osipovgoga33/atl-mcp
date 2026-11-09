@@ -1,0 +1,5 @@
+dist/
+/atl-mcp
+/atl-mcp.exe
+*.local*
+.env
