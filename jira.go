@@ -34,6 +34,9 @@ func jiraVal(v any) string {
 		if s, ok := compactContainer(x); ok {
 			return s
 		}
+		if s, ok := compactLink(x); ok {
+			return s
+		}
 		for _, k := range []string{"displayName", "name", "value", "key"} {
 			if s, ok := x[k].(string); ok && s != "" {
 				if k == "key" {
@@ -93,6 +96,26 @@ func compactContainer(x map[string]any) (string, bool) {
 		return fmt.Sprintf("комментариев %d (текст — jira_issue с comments=true)", max(int(total), len(cs))), true
 	}
 	return "", false
+}
+
+// compactLink — связь задачи (элемент issuelinks) одной строкой, как в jira_issue:
+// «[id] родительская задача ERP-1 | Анализ | Тема». Полный JSON связи с типом,
+// статусом и приоритетом весит ~1,5 КБ.
+func compactLink(x map[string]any) (string, bool) {
+	typ, ok := x["type"].(map[string]any)
+	if !ok {
+		return "", false
+	}
+	other, label := x["inwardIssue"], mstr(typ, "inward")
+	if other == nil {
+		other, label = x["outwardIssue"], mstr(typ, "outward")
+	}
+	is, ok := other.(map[string]any)
+	if !ok {
+		return "", false
+	}
+	return fmt.Sprintf("[%s] %s %s | %s | %s", mstr(x, "id"), label, mstr(is, "key"),
+		mstr(is, "fields", "status"), mstr(is, "fields", "summary")), true
 }
 
 // compactJSON — JSON без служебных ссылок и аватаров, не длиннее 1000 символов.
