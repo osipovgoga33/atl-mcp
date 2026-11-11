@@ -41,6 +41,10 @@ enabled). Both take an `action` parameter.
 | `jira_link_types` | — | link types |
 | `jira_users` | `text`, `project` | users; with `project` — who can be assigned |
 | `jira_filters` | — | favourite filters with JQL |
+| `jira_dashboards` | `text` | favourite dashboards, or search by name |
+| `jira_dashboard` | `id` | gadgets of a dashboard and their settings, rich and smart filters by name |
+| `jira_rich_filter` | `id` or `text` | rich filter (Rich Filters app): base filter, quick, dynamic and smart filters with the JQL of each clause, views |
+| `jira_jql_time` | `jql` / `jqls` / `rich_filter` (+ `smart_filter`), `start_at` | time and issue count of each query or rich filter clause, one by one, 40 s budget |
 | `jira_download` | `key`, `name` / `attachment_id` / `all` | download attachments to the downloads folder |
 | `jira_dev_info` | `key` | commits, branches, PRs (with a Bitbucket/GitLab integration) |
 | `jira_boards` | `text`, `project`, `type` | boards |
@@ -178,7 +182,7 @@ binary and other variables.
 
 `atl-mcp.exe --version`; the start line in
 `%APPDATA%\Claude\logs\mcp-server-<name>.log`:
-`старт atl-mcp 0.4.2: confluence=... jira=... запись=...`.
+`старт atl-mcp 0.5.0: confluence=... jira=... запись=...`.
 
 ## Build
 

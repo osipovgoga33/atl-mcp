@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "atl-mcp",
   "display_name": "Confluence + Jira (Server/DC)",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Confluence и Jira Server / Data Center по персональному токену (PAT): спеки, задачи, переходы, трудозатраты, история и время в статусах, Agile, Service Desk.",
   "author": {
     "name": "GOSIPOV"
@@ -52,7 +52,7 @@
   "tools": [
     {
       "name": "atl",
-      "description": "Чтение: Confluence (поиск, страницы, комментарии, вложения), Jira (задачи, JQL, проекты, поля, переходы, история, время в статусах, трудозатраты, Agile, Dev Info, Service Desk)"
+      "description": "Чтение: Confluence (поиск, страницы, комментарии, вложения), Jira (задачи, JQL, проекты, поля, переходы, история, время в статусах, трудозатраты, Agile, Dev Info, Service Desk, дашборды, rich-фильтры, время JQL)"
     },
     {
       "name": "atl_write",

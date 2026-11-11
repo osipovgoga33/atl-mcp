@@ -41,6 +41,10 @@ MCP-сервер на Go (только стандартная библиотек
 | `jira_link_types` | — | типы связей |
 | `jira_users` | `text`, `project` | пользователи; с `project` — кому можно назначить |
 | `jira_filters` | — | избранные фильтры с JQL |
+| `jira_dashboards` | `text` | избранные дашборды или поиск по названию |
+| `jira_dashboard` | `id` | гаджеты дашборда и их настройки, rich- и умные фильтры по именам |
+| `jira_rich_filter` | `id` или `text` | rich-фильтр (Rich Filters): базовый фильтр, быстрые, динамические и умные фильтры с JQL условий, представления |
+| `jira_jql_time` | `jql` / `jqls` / `rich_filter` (+ `smart_filter`), `start_at` | время и число задач по каждому запросу или условию rich-фильтра, по одному, бюджет 40 с |
 | `jira_download` | `key`, `name` / `attachment_id` / `all` | скачать вложения в папку загрузок |
 | `jira_dev_info` | `key` | коммиты, ветки, PR (если есть интеграция с Bitbucket/GitLab) |
 | `jira_boards` | `text`, `project`, `type` | доски |
@@ -184,7 +188,7 @@ MCP-сервер на Go (только стандартная библиотек
 
 `atl-mcp.exe --version`; строка старта в
 `%APPDATA%\Claude\logs\mcp-server-<имя>.log`:
-`старт atl-mcp 0.4.2: confluence=... jira=... запись=...`.
+`старт atl-mcp 0.5.0: confluence=... jira=... запись=...`.
 
 ## Сборка
 
