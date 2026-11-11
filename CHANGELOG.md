@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.0] - 2026-11-11
+
+- `jira_dashboards` - favourite dashboards, or search by name with `text`.
+- `jira_dashboard` - the gadgets of a dashboard with their settings. Titles
+  stored as `-041E-0442...` are decoded; for Rich Filters gadgets the rich
+  filter and smart filter ids are shown with their names.
+- `jira_rich_filter` - a rich filter of the Rich Filters for Jira Dashboards
+  app: base filter with its JQL, quick, dynamic and smart filters with the JQL
+  of every clause, views and their columns. `text` searches rich filters by
+  name. The standard Jira API does not show any of this.
+- `jira_jql_time` - how long Jira takes to count each query (`jql`, `jqls`) or
+  each clause of a rich filter on top of its base filter (`rich_filter`,
+  optional `smart_filter`). Queries run one by one with the same 40 s budget as
+  bulk actions; `start_at` continues. A dashboard whose gadgets time out
+  usually has one ScriptRunner subquery (`linkedIssuesOf`, `subtasksOf`) over
+  the whole Jira: this action finds it in one call.
+
 ## [0.4.2] — 2026-11-09
 
 - `jira_worklog_update` — edit your own worklog: time, start, comment. The server

@@ -51,6 +51,9 @@ JIRA:
 - jira_changelog: key, field (напр. status). jira_status_times: key — время в каждом статусе.
 - jira_worklog: key — трудозатраты с итогом по людям. jira_watchers: key. jira_link_types.
 - jira_users: text, project (тогда — кому можно назначить). jira_filters: избранные фильтры.
+- jira_dashboards: text (поиск по названию; без него избранные). jira_dashboard: id: гаджеты и их настройки (rich-фильтр, умный фильтр по имени).
+- jira_rich_filter: id: rich-фильтр (Rich Filters): базовый фильтр, быстрые, динамические и умные фильтры с JQL каждого условия, представления; text: поиск по названию.
+- jira_jql_time: jql | jqls [] | rich_filter (+ smart_filter): время и число задач по каждому запросу или условию, по одному; бюджет 40 с, продолжение start_at.
 - jira_download: key, name или attachment_id или all=true — вложения в папку загрузок.
 - jira_dev_info: key — коммиты, ветки, PR (если есть интеграция).
 - jira_boards: text, project, type (scrum|kanban). jira_sprints: board_id, state (active,future,closed).
@@ -92,6 +95,7 @@ func (t *toolset) readActions() ([]string, map[string]action) {
 		"jira_transitions": t.jiraTransitions, "jira_changelog": t.jiraChangelog, "jira_status_times": t.jiraStatusTimes,
 		"jira_worklog": t.jiraWorklog, "jira_watchers": t.jiraWatchers, "jira_link_types": t.jiraLinkTypes,
 		"jira_users": t.jiraUsers, "jira_filters": t.jiraFilters, "jira_download": t.jiraDownload,
+		"jira_dashboards": t.jiraDashboards, "jira_dashboard": t.jiraDashboard, "jira_rich_filter": t.jiraRichFilter, "jira_jql_time": t.jiraJQLTime,
 		"jira_dev_info": t.jiraDevInfo, "jira_boards": t.jiraBoards, "jira_sprints": t.jiraSprints,
 		"jira_sprint_issues": t.jiraSprintIssues, "jira_board_issues": t.jiraBoardIssues,
 		"jsm_desks": t.jsmDesks, "jsm_queues": t.jsmQueues, "jsm_queue_issues": t.jsmQueueIssues, "jsm_sla": t.jsmSLA,
@@ -99,6 +103,7 @@ func (t *toolset) readActions() ([]string, map[string]action) {
 	order := []string{"conf_search", "conf_page", "conf_children", "conf_spaces", "conf_attachments", "conf_comments", "conf_download",
 		"jira_issue", "jira_search", "jira_projects", "jira_project", "jira_fields", "jira_create_meta", "jira_transitions",
 		"jira_changelog", "jira_status_times", "jira_worklog", "jira_watchers", "jira_link_types", "jira_users", "jira_filters",
+		"jira_dashboards", "jira_dashboard", "jira_rich_filter", "jira_jql_time",
 		"jira_download", "jira_dev_info", "jira_boards", "jira_sprints", "jira_sprint_issues", "jira_board_issues",
 		"jsm_desks", "jsm_queues", "jsm_queue_issues", "jsm_sla"}
 	return order, m
@@ -129,7 +134,7 @@ func props(names ...string) map[string]any {
 	p := map[string]any{}
 	for _, n := range names {
 		switch n {
-		case "fields", "labels", "keys", "components", "fix_versions":
+		case "fields", "labels", "keys", "components", "fix_versions", "jqls":
 			p[n] = map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
 		case "comments", "minor_edit", "allow_shrink", "all", "dry_run":
 			p[n] = map[string]any{"type": "boolean"}
@@ -146,7 +151,7 @@ func (t *toolset) list() []map[string]any {
 	rOrder, _ := t.readActions()
 	rp := props("id", "space", "title", "text", "cql", "format", "name", "key", "jql", "fields", "comments", "limit",
 		"start_at", "project", "issuetype", "field", "attachment_id", "all", "board_id", "sprint_id", "state", "type",
-		"desk_id", "queue_id", "offset", "find")
+		"desk_id", "queue_id", "offset", "find", "rich_filter", "smart_filter", "jqls")
 	rp["action"] = map[string]any{"type": "string", "enum": rOrder}
 	rp["format"] = map[string]any{"type": "string", "enum": []string{"text", "storage"}}
 	read := map[string]any{
