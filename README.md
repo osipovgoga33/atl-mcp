@@ -64,6 +64,7 @@ enabled). Both take an `action` parameter.
 |---|---|
 | `conf_create` | `space` and/or `parent_id`, `title`, `body` (storage), `labels` |
 | `conf_update` | `id`, `version` (as read), `body` (full body), `title`, `message`, `minor_edit`, `allow_shrink` |
+| `conf_patch` | `id`, `operations` [{`oldString`, `newString`, `occurrence`}], `dryRun`, `message`, `minor_edit`, `allow_shrink` - edit by storage fragments; the server reads the body and version itself |
 | `conf_label` | `id`, `labels` |
 | `conf_attach` | `id`, exactly one of `path` / `content` / `content_base64`, `name`, `message` |
 | `conf_comment` | `id`, `body` (storage), `parent_comment_id` |
@@ -110,6 +111,10 @@ issue links and watchers can be removed — both are reversible.
 - `conf_update` requires the version read before the edit, so other people's
   edits are not overwritten. A new body less than half the old one is refused
   unless `allow_shrink` is passed.
+- `conf_patch` writes only if every operation applies; a fragment that is not
+  found or not unique refuses the whole call before any write. A version
+  conflict is retried once on a freshly read page, never more. `dryRun` writes
+  nothing.
 - `conf_move` — only within the space and never under the page's own descendant.
 - A Jira transition that does not exist is not sent — the answer lists the
   available ones.

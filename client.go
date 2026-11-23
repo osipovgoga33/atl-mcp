@@ -249,5 +249,13 @@ func (c *client) httpError(code int, ct string, data []byte) error {
 	if msg != "" {
 		out += ". " + msg
 	}
-	return errors.New(out)
+	return &httpErr{Code: code, msg: out}
 }
+
+// httpErr - ошибка HTTP с кодом: conf_patch по 409 перечитывает страницу.
+type httpErr struct {
+	Code int
+	msg  string
+}
+
+func (e *httpErr) Error() string { return e.msg }

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0] - 2026-11-23
+
+- `conf_patch` - edit a Confluence page by fragments, without sending the
+  whole body through the chat: `id`, `operations: [{oldString, newString,
+  occurrence}]` over the storage format. The server reads the current body and
+  version itself, applies the operations in order (each on the result of the
+  previous one) and writes `version + 1`. A fragment must be unique, otherwise
+  the call is refused with the number of matches; `occurrence` (from 1) picks
+  one. Nothing is written unless every operation applies. On a version
+  conflict (HTTP 409) the page is read again and the edit applied once more,
+  then refused. `dryRun: true` shows the context around every replacement
+  without writing. The answer gives the final version and the number of
+  operations applied. Made for pages of hundreds of KB (registers, long
+  tables) where `conf_update` with the full body is impractical.
+
 ## [0.5.0] - 2026-11-11
 
 - `jira_dashboards` - favourite dashboards, or search by name with `text`.

@@ -64,6 +64,7 @@ MCP-сервер на Go (только стандартная библиотек
 |---|---|
 | `conf_create` | `space` и/или `parent_id`, `title`, `body` (storage), `labels` |
 | `conf_update` | `id`, `version` (прочитанный), `body` (полное тело), `title`, `message`, `minor_edit`, `allow_shrink` |
+| `conf_patch` | `id`, `operations` [{`oldString`, `newString`, `occurrence`}], `dryRun`, `message`, `minor_edit`, `allow_shrink` - правка фрагментами storage, тело и версию сервер читает сам |
 | `conf_label` | `id`, `labels` |
 | `conf_attach` | `id`, ровно одно из `path` / `content` / `content_base64`, `name`, `message` |
 | `conf_comment` | `id`, `body` (storage), `parent_comment_id` |
@@ -117,6 +118,9 @@ MCP-сервер на Go (только стандартная библиотек
 - `conf_update` требует версию, прочитанную перед правкой: чужие правки не
   затираются. Новое тело вдвое короче старого — отказ, пока не передан
   `allow_shrink`.
+- `conf_patch` пишет, только если применились все операции: фрагмент не найден
+  или не уникален - отказ целиком до записи. Конфликт версии - одна повторная
+  попытка на перечитанной странице, не больше. `dryRun` ничего не пишет.
 - `conf_move` — только внутри пространства и не под собственного потомка.
 - Переход Jira, которого нет, не отправляется — в ответ список доступных.
 - Пакетные действия: не больше 50 задач (и для JQL — по общему числу найденных),

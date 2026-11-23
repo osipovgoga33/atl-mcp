@@ -64,6 +64,7 @@ const writeDescription = `Запись в Confluence и Jira. Параметр a
 CONFLUENCE:
 - conf_create: space и/или parent_id, title, body (storage XHTML), labels [].
 - conf_update: id, version (прочитанный через conf_page — обязателен), body (полное новое тело), title, message, minor_edit, allow_shrink.
+- conf_patch: id, operations [{oldString, newString, occurrence}] - правка фрагментами storage, тело целиком не передаётся. Сервер сам читает тело и версию, применяет операции по порядку (каждая над результатом предыдущей), пишет version+1 и отдаёт итоговую версию и число применённых. oldString - точный фрагмент storage (как в conf_page format=storage), обязан быть уникальным, иначе отказ с числом вхождений; occurrence (с 1) выбирает вхождение. Запись только если применились все. Конфликт версии - перечитать и повторить один раз. dryRun=true - без записи, контекст вокруг каждой замены. Также message, minor_edit, allow_shrink.
 - conf_label: id, labels [].
 - conf_attach: id, ровно одно из path | content | content_base64; name; message. То же имя = новая версия. Возвращает фрагмент storage для вставки.
 - conf_comment: id, body (storage), parent_comment_id. conf_move: id, parent_id (то же пространство), version.
@@ -111,7 +112,7 @@ func (t *toolset) readActions() ([]string, map[string]action) {
 
 func (t *toolset) writeActions() ([]string, map[string]action) {
 	m := map[string]action{
-		"conf_create": t.confCreate, "conf_update": t.confUpdate, "conf_label": t.confLabel,
+		"conf_create": t.confCreate, "conf_update": t.confUpdate, "conf_patch": t.confPatch, "conf_label": t.confLabel,
 		"conf_attach": t.confAttach, "conf_comment": t.confComment, "conf_move": t.confMove,
 		"jira_create": t.jiraCreate, "jira_update": t.jiraUpdate, "jira_transition": t.jiraTransition,
 		"jira_bulk_update": t.jiraBulkUpdate, "jira_bulk_transition": t.jiraBulkTransition,
@@ -123,7 +124,7 @@ func (t *toolset) writeActions() ([]string, map[string]action) {
 		"jira_sprint_add":     t.jiraSprintAdd, "jira_backlog": t.jiraBacklog, "jira_sprint_create": t.jiraSprintCreate,
 		"jira_version_create": t.jiraVersionCreate,
 	}
-	order := []string{"conf_create", "conf_update", "conf_label", "conf_attach", "conf_comment", "conf_move",
+	order := []string{"conf_create", "conf_update", "conf_patch", "conf_label", "conf_attach", "conf_comment", "conf_move",
 		"jira_create", "jira_update", "jira_bulk_update", "jira_transition", "jira_bulk_transition", "jira_assign", "jira_comment", "jira_worklog_add", "jira_worklog_update",
 		"jira_link", "jira_link_remove", "jira_remote_link", "jira_attach", "jira_watcher_add", "jira_watcher_remove",
 		"jira_sprint_add", "jira_backlog", "jira_sprint_create", "jira_version_create"}
@@ -136,7 +137,7 @@ func props(names ...string) map[string]any {
 		switch n {
 		case "fields", "labels", "keys", "components", "fix_versions", "jqls":
 			p[n] = map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
-		case "comments", "minor_edit", "allow_shrink", "all", "dry_run":
+		case "comments", "minor_edit", "allow_shrink", "all", "dry_run", "dryRun":
 			p[n] = map[string]any{"type": "boolean"}
 		case "limit", "version", "start_at", "offset":
 			p[n] = map[string]any{"type": "integer"}
@@ -167,11 +168,17 @@ func (t *toolset) list() []map[string]any {
 			"project", "issuetype", "summary", "description", "priority", "assignee", "components", "fix_versions", "due_date",
 			"parent", "transition", "comment", "resolution", "user", "comment_id", "time_spent", "started",
 			"inward_key", "outward_key", "link_type", "link_id", "url", "keys", "sprint_id", "board_id",
-			"start_date", "end_date", "goal", "release_date", "jql", "dry_run", "worklog_id", "adjust_estimate", "new_estimate")
+			"start_date", "end_date", "goal", "release_date", "jql", "dry_run", "dryRun", "worklog_id", "adjust_estimate", "new_estimate")
 		wp["action"] = map[string]any{"type": "string", "enum": wOrder}
 		wp["adjust_estimate"] = map[string]any{"type": "string", "enum": []string{"auto", "leave", "new"}}
 		wp["fields"] = map[string]any{"type": "object", "description": "Поля Jira как есть, напр. {\"customfield_10100\": \"x\"}"}
 		wp["update"] = map[string]any{"type": "object", "description": "Операции update Jira"}
+		wp["operations"] = map[string]any{"type": "array", "description": "conf_patch: замены фрагментов storage по порядку",
+			"items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"oldString", "newString"},
+				"properties": map[string]any{
+					"oldString":  map[string]any{"type": "string", "description": "точный фрагмент текущего storage, уникальный"},
+					"newString":  map[string]any{"type": "string", "description": "чем заменить (пустая строка - удалить)"},
+					"occurrence": map[string]any{"type": "integer", "minimum": 1, "description": "какое вхождение, с 1, если фрагмент не уникален"}}}}
 		tools = append(tools, map[string]any{
 			"name": "atl_write", "description": writeDescription,
 			"inputSchema": map[string]any{"type": "object", "properties": wp, "required": []string{"action"}, "additionalProperties": false},

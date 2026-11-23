@@ -31,7 +31,8 @@ const serverInstructions = `Confluence и Jira Server/DC.
 Чтение — инструмент atl (action). Запись — atl_write, доступен только если включён ATL_ALLOW_WRITE.
 Порядок правки страницы: atl conf_page с format=storage -> взять version -> atl_write conf_update с этим version и полным новым телом.
 Тело страниц — Confluence storage format (XHTML с макросами ac:), не markdown.
-Если страница изменилась после чтения, conf_update откажет: перечитать и слить правки.`
+Если страница изменилась после чтения, conf_update откажет: перечитать и слить правки.
+Большая страница или точечная правка - atl_write conf_patch: id и operations [{oldString, newString}] по storage, тело целиком не передаётся; сначала dryRun=true.`
 
 func serve(in io.Reader, out io.Writer, tools *toolset) {
 	reader := bufio.NewReaderSize(in, 1<<20)
