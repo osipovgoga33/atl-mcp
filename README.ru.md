@@ -22,6 +22,8 @@ MCP-сервер на Go (только стандартная библиотек
 | `conf_attachments` | `id` | вложения |
 | `conf_comments` | `id` | комментарии с ответами |
 | `conf_download` | `id`, `name` | скачать вложение в папку загрузок |
+| `conf_templates` | `space`, `limit` | шаблоны страниц пространства (без `space` - глобальные) |
+| `conf_template` | `id`, `format`, `find`, `offset` | шаблон страницы, по умолчанию storage |
 
 **Jira**
 
@@ -65,6 +67,8 @@ MCP-сервер на Go (только стандартная библиотек
 | `conf_create` | `space` и/или `parent_id`, `title`, `body` (storage), `labels` |
 | `conf_update` | `id`, `version` (прочитанный), `body` (полное тело), `title`, `message`, `minor_edit`, `allow_shrink` |
 | `conf_patch` | `id`, `operations` [{`oldString`, `newString`, `occurrence`}], `dryRun`, `message`, `minor_edit`, `allow_shrink` - правка фрагментами storage, тело и версию сервер читает сам |
+| `conf_template_patch` | `id`, `operations`, `dryRun`, `allow_shrink` - правка шаблона страницы фрагментами storage; версий у шаблонов нет |
+| `conf_template_update` | `id`, `body`, `allow_shrink` - замена тела шаблона страницы |
 | `conf_label` | `id`, `labels` |
 | `conf_attach` | `id`, ровно одно из `path` / `content` / `content_base64`, `name`, `message` |
 | `conf_comment` | `id`, `body` (storage), `parent_comment_id` |

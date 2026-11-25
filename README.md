@@ -22,6 +22,8 @@ enabled). Both take an `action` parameter.
 | `conf_attachments` | `id` | attachments |
 | `conf_comments` | `id` | comments with replies |
 | `conf_download` | `id`, `name` | download an attachment to the downloads folder |
+| `conf_templates` | `space`, `limit` | page templates of a space (without `space` - global) |
+| `conf_template` | `id`, `format`, `find`, `offset` | a page template, storage by default |
 
 **Jira**
 
@@ -65,6 +67,8 @@ enabled). Both take an `action` parameter.
 | `conf_create` | `space` and/or `parent_id`, `title`, `body` (storage), `labels` |
 | `conf_update` | `id`, `version` (as read), `body` (full body), `title`, `message`, `minor_edit`, `allow_shrink` |
 | `conf_patch` | `id`, `operations` [{`oldString`, `newString`, `occurrence`}], `dryRun`, `message`, `minor_edit`, `allow_shrink` - edit by storage fragments; the server reads the body and version itself |
+| `conf_template_patch` | `id`, `operations`, `dryRun`, `allow_shrink` - edit a page template by storage fragments; templates have no versions |
+| `conf_template_update` | `id`, `body`, `allow_shrink` - replace the body of a page template |
 | `conf_label` | `id`, `labels` |
 | `conf_attach` | `id`, exactly one of `path` / `content` / `content_base64`, `name`, `message` |
 | `conf_comment` | `id`, `body` (storage), `parent_comment_id` |

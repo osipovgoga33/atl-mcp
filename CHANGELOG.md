@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0] - 2026-11-25
+
+- Confluence page templates (Space tools -> Templates). Read: `conf_templates`
+  (`space`; without it, global templates) and `conf_template` (`id`, `format`
+  storage by default or text, `find`, `offset` as in `conf_page`). Write:
+  `conf_template_patch` (`id`, `operations` and `dryRun` as in `conf_patch`)
+  and `conf_template_update` (`id`, full `body`). Name, description, space and
+  labels of the template are kept. Templates have no versions, so a write
+  replaces the body without a conflict check: run `dryRun` first.
+- The template REST path is detected on the first call: `/rest/api/template`,
+  then `/rest/experimental/template`.
+- `ATL_WRITE_SPACES` applies to templates; a global template is not written
+  while the list is set. The shrink guard (`allow_shrink`) works as for pages.
+
 ## [0.6.0] - 2026-11-23
 
 - `conf_patch` - edit a Confluence page by fragments, without sending the

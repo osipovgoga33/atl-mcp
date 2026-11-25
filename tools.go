@@ -16,6 +16,7 @@ type toolset struct {
 	// bulkBudget — сколько пакетное действие работает до того, как вернуть
 	// остаток: клиент (Desktop, удалённая сессия) ждёт ответ около минуты.
 	bulkBudget time.Duration
+	tmplBase   string // подобранный путь REST шаблонов (/rest/api/template или /rest/experimental/template)
 }
 
 func newToolset(cfg config) *toolset {
@@ -42,6 +43,8 @@ CONFLUENCE:
 - conf_page: id ИЛИ space+title; format = text (по умолч.) | storage (исходный XHTML — нужен перед правкой). Возвращает version. Большая страница — кусками: offset (с какого символа, ответ подскажет следующий). find — куски вокруг каждого вхождения текста (номер задачи, цвет правок вида rgb(255,0,0) в storage).
 - conf_children: id. conf_spaces: limit. conf_attachments: id. conf_comments: id.
 - conf_download: id, name — скачать вложение в папку загрузок.
+- conf_templates: space — шаблоны страниц пространства (без space — глобальные); limit.
+- conf_template: id (из conf_templates); format = storage (по умолч.) | text; find, offset — как у conf_page. Версий у шаблонов нет.
 JIRA:
 - jira_issue: key; comments=true; fields — доп. поля (customfield_…).
 - jira_search: jql, limit (≤100), start_at, fields.
@@ -68,6 +71,8 @@ CONFLUENCE:
 - conf_label: id, labels [].
 - conf_attach: id, ровно одно из path | content | content_base64; name; message. То же имя = новая версия. Возвращает фрагмент storage для вставки.
 - conf_comment: id, body (storage), parent_comment_id. conf_move: id, parent_id (то же пространство), version.
+- conf_template_patch: id шаблона, operations — как у conf_patch (фрагменты storage, уникальные, все или ничего), dryRun, allow_shrink. Версий у шаблона нет: пишет поверх, сначала dryRun.
+- conf_template_update: id шаблона, body (полное новое тело storage), allow_shrink. Имя, описание и метки шаблона не меняются.
 JIRA (тексты — вики-разметка Jira):
 - jira_create: project, issuetype, summary, description, priority, assignee, labels [], components [], fix_versions [], due_date, parent (для подзадачи), fields {кастомные поля как есть}.
 - jira_update: key + те же поля и/или fields {}, update {} (операции Jira, напр. {"labels":[{"add":"x"}]}).
@@ -90,8 +95,8 @@ func (t *toolset) readActions() ([]string, map[string]action) {
 	m := map[string]action{
 		"conf_search": t.confSearch, "conf_page": t.confPage, "conf_children": t.confChildren,
 		"conf_spaces": t.confSpaces, "conf_attachments": t.confAttachments, "conf_comments": t.confComments,
-		"conf_download": t.confDownload,
-		"jira_issue":    t.jiraIssue, "jira_search": t.jiraSearch, "jira_projects": t.jiraProjects,
+		"conf_download": t.confDownload, "conf_templates": t.confTemplates, "conf_template": t.confTemplate,
+		"jira_issue": t.jiraIssue, "jira_search": t.jiraSearch, "jira_projects": t.jiraProjects,
 		"jira_project": t.jiraProject, "jira_fields": t.jiraFields, "jira_create_meta": t.jiraCreateMeta,
 		"jira_transitions": t.jiraTransitions, "jira_changelog": t.jiraChangelog, "jira_status_times": t.jiraStatusTimes,
 		"jira_worklog": t.jiraWorklog, "jira_watchers": t.jiraWatchers, "jira_link_types": t.jiraLinkTypes,
@@ -102,6 +107,7 @@ func (t *toolset) readActions() ([]string, map[string]action) {
 		"jsm_desks": t.jsmDesks, "jsm_queues": t.jsmQueues, "jsm_queue_issues": t.jsmQueueIssues, "jsm_sla": t.jsmSLA,
 	}
 	order := []string{"conf_search", "conf_page", "conf_children", "conf_spaces", "conf_attachments", "conf_comments", "conf_download",
+		"conf_templates", "conf_template",
 		"jira_issue", "jira_search", "jira_projects", "jira_project", "jira_fields", "jira_create_meta", "jira_transitions",
 		"jira_changelog", "jira_status_times", "jira_worklog", "jira_watchers", "jira_link_types", "jira_users", "jira_filters",
 		"jira_dashboards", "jira_dashboard", "jira_rich_filter", "jira_jql_time",
@@ -114,6 +120,7 @@ func (t *toolset) writeActions() ([]string, map[string]action) {
 	m := map[string]action{
 		"conf_create": t.confCreate, "conf_update": t.confUpdate, "conf_patch": t.confPatch, "conf_label": t.confLabel,
 		"conf_attach": t.confAttach, "conf_comment": t.confComment, "conf_move": t.confMove,
+		"conf_template_patch": t.confTemplatePatch, "conf_template_update": t.confTemplateUpdate,
 		"jira_create": t.jiraCreate, "jira_update": t.jiraUpdate, "jira_transition": t.jiraTransition,
 		"jira_bulk_update": t.jiraBulkUpdate, "jira_bulk_transition": t.jiraBulkTransition,
 		"jira_assign": t.jiraAssign, "jira_comment": t.jiraComment, "jira_worklog_add": t.jiraWorklogAdd, "jira_worklog_update": t.jiraWorklogUpdate,
@@ -125,6 +132,7 @@ func (t *toolset) writeActions() ([]string, map[string]action) {
 		"jira_version_create": t.jiraVersionCreate,
 	}
 	order := []string{"conf_create", "conf_update", "conf_patch", "conf_label", "conf_attach", "conf_comment", "conf_move",
+		"conf_template_patch", "conf_template_update",
 		"jira_create", "jira_update", "jira_bulk_update", "jira_transition", "jira_bulk_transition", "jira_assign", "jira_comment", "jira_worklog_add", "jira_worklog_update",
 		"jira_link", "jira_link_remove", "jira_remote_link", "jira_attach", "jira_watcher_add", "jira_watcher_remove",
 		"jira_sprint_add", "jira_backlog", "jira_sprint_create", "jira_version_create"}
@@ -173,7 +181,7 @@ func (t *toolset) list() []map[string]any {
 		wp["adjust_estimate"] = map[string]any{"type": "string", "enum": []string{"auto", "leave", "new"}}
 		wp["fields"] = map[string]any{"type": "object", "description": "Поля Jira как есть, напр. {\"customfield_10100\": \"x\"}"}
 		wp["update"] = map[string]any{"type": "object", "description": "Операции update Jira"}
-		wp["operations"] = map[string]any{"type": "array", "description": "conf_patch: замены фрагментов storage по порядку",
+		wp["operations"] = map[string]any{"type": "array", "description": "conf_patch, conf_template_patch: замены фрагментов storage по порядку",
 			"items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"oldString", "newString"},
 				"properties": map[string]any{
 					"oldString":  map[string]any{"type": "string", "description": "точный фрагмент текущего storage, уникальный"},

@@ -206,6 +206,11 @@ func (t *toolset) confPage(a args) (string, error) {
 	default:
 		return "", fmt.Errorf("format: text или storage")
 	}
+	return renderBody(&b, body, a)
+}
+
+// renderBody - тело после шапки: целиком, кусками по offset или фрагментами по find.
+func renderBody(b *strings.Builder, body string, a args) (string, error) {
 	if find := a.raw("find"); find != "" {
 		b.WriteString(findFragments(body, find))
 		return truncate(b.String(), "Совпадений слишком много — уточни find."), nil
@@ -222,10 +227,10 @@ func (t *toolset) confPage(a args) (string, error) {
 		return b.String(), nil
 	}
 	end := min(off+room, len(r))
-	fmt.Fprintf(&b, "[фрагмент: символы %d–%d из %d]\n", off, end, len(r))
+	fmt.Fprintf(b, "[фрагмент: символы %d–%d из %d]\n", off, end, len(r))
 	b.WriteString(string(r[off:end]))
 	if end < len(r) {
-		fmt.Fprintf(&b, "\n\n[ПРОДОЛЖЕНИЕ: тот же вызов с offset=%d. Для правки целиком страница не годится — нужен весь текст.]", end)
+		fmt.Fprintf(b, "\n\n[ПРОДОЛЖЕНИЕ: тот же вызов с offset=%d. Для правки целиком страница не годится — нужен весь текст.]", end)
 	}
 	return b.String(), nil
 }
