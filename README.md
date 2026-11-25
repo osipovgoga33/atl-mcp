@@ -191,7 +191,7 @@ binary and other variables.
 
 `atl-mcp.exe --version`; the start line in
 `%APPDATA%\Claude\logs\mcp-server-<name>.log`:
-`старт atl-mcp 0.5.0: confluence=... jira=... запись=...`.
+`старт atl-mcp 0.7.0: confluence=... jira=... запись=...`.
 
 ## Build
 
