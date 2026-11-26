@@ -69,7 +69,7 @@ MCP-сервер на Go (только стандартная библиотек
 | `conf_patch` | `id`, `operations` [{`oldString`, `newString`, `occurrence`}], `dryRun`, `message`, `minor_edit`, `allow_shrink` - правка фрагментами storage, тело и версию сервер читает сам |
 | `conf_template_patch` | `id`, `operations`, `dryRun`, `allow_shrink` - правка шаблона страницы фрагментами storage; версий у шаблонов нет |
 | `conf_template_update` | `id`, `body`, `allow_shrink` - замена тела шаблона страницы |
-| `conf_label` | `id`, `labels` |
+| `conf_label` | `id`, `labels` (добавить), `remove` (снять), `dryRun` |
 | `conf_attach` | `id`, ровно одно из `path` / `content` / `content_base64`, `name`, `message` |
 | `conf_comment` | `id`, `body` (storage), `parent_comment_id` |
 | `conf_move` | `id`, `parent_id` (то же пространство), `version` |
@@ -198,7 +198,7 @@ MCP-сервер на Go (только стандартная библиотек
 
 `atl-mcp.exe --version`; строка старта в
 `%APPDATA%\Claude\logs\mcp-server-<имя>.log`:
-`старт atl-mcp 0.7.0: confluence=... jira=... запись=...`.
+`старт atl-mcp 0.8.0: confluence=... jira=... запись=...`.
 
 ## Сборка
 

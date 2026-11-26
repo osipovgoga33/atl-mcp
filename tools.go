@@ -68,7 +68,7 @@ CONFLUENCE:
 - conf_create: space и/или parent_id, title, body (storage XHTML), labels [].
 - conf_update: id, version (прочитанный через conf_page — обязателен), body (полное новое тело), title, message, minor_edit, allow_shrink.
 - conf_patch: id, operations [{oldString, newString, occurrence}] - правка фрагментами storage, тело целиком не передаётся. Сервер сам читает тело и версию, применяет операции по порядку (каждая над результатом предыдущей), пишет version+1 и отдаёт итоговую версию и число применённых. oldString - точный фрагмент storage (как в conf_page format=storage), обязан быть уникальным, иначе отказ с числом вхождений; occurrence (с 1) выбирает вхождение. Запись только если применились все. Конфликт версии - перечитать и повторить один раз. dryRun=true - без записи, контекст вокруг каждой замены. Также message, minor_edit, allow_shrink.
-- conf_label: id, labels [].
+- conf_label: id, labels [] - добавить, remove [] - снять (можно вместе). Уже стоящие не добавляются, отсутствующие не снимаются. dryRun=true - текущие метки и что изменилось бы, без записи.
 - conf_attach: id, ровно одно из path | content | content_base64; name; message. То же имя = новая версия. Возвращает фрагмент storage для вставки.
 - conf_comment: id, body (storage), parent_comment_id. conf_move: id, parent_id (то же пространство), version.
 - conf_template_patch: id шаблона, operations — как у conf_patch (фрагменты storage, уникальные, все или ничего), dryRun, allow_shrink. Версий у шаблона нет: пишет поверх, сначала dryRun.
@@ -143,7 +143,7 @@ func props(names ...string) map[string]any {
 	p := map[string]any{}
 	for _, n := range names {
 		switch n {
-		case "fields", "labels", "keys", "components", "fix_versions", "jqls":
+		case "fields", "labels", "remove", "keys", "components", "fix_versions", "jqls":
 			p[n] = map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
 		case "comments", "minor_edit", "allow_shrink", "all", "dry_run", "dryRun":
 			p[n] = map[string]any{"type": "boolean"}
@@ -171,7 +171,7 @@ func (t *toolset) list() []map[string]any {
 	tools := []map[string]any{read}
 	if t.cfg.AllowWrite {
 		wOrder, _ := t.writeActions()
-		wp := props("id", "space", "parent_id", "title", "body", "version", "message", "minor_edit", "allow_shrink", "labels",
+		wp := props("id", "space", "parent_id", "title", "body", "version", "message", "minor_edit", "allow_shrink", "labels", "remove",
 			"key", "path", "name", "content", "content_base64", "parent_comment_id",
 			"project", "issuetype", "summary", "description", "priority", "assignee", "components", "fix_versions", "due_date",
 			"parent", "transition", "comment", "resolution", "user", "comment_id", "time_spent", "started",

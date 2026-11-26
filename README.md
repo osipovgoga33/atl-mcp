@@ -69,7 +69,7 @@ enabled). Both take an `action` parameter.
 | `conf_patch` | `id`, `operations` [{`oldString`, `newString`, `occurrence`}], `dryRun`, `message`, `minor_edit`, `allow_shrink` - edit by storage fragments; the server reads the body and version itself |
 | `conf_template_patch` | `id`, `operations`, `dryRun`, `allow_shrink` - edit a page template by storage fragments; templates have no versions |
 | `conf_template_update` | `id`, `body`, `allow_shrink` - replace the body of a page template |
-| `conf_label` | `id`, `labels` |
+| `conf_label` | `id`, `labels` (add), `remove` (remove), `dryRun` |
 | `conf_attach` | `id`, exactly one of `path` / `content` / `content_base64`, `name`, `message` |
 | `conf_comment` | `id`, `body` (storage), `parent_comment_id` |
 | `conf_move` | `id`, `parent_id` (same space), `version` |
@@ -191,7 +191,7 @@ binary and other variables.
 
 `atl-mcp.exe --version`; the start line in
 `%APPDATA%\Claude\logs\mcp-server-<name>.log`:
-`старт atl-mcp 0.7.0: confluence=... jira=... запись=...`.
+`старт atl-mcp 0.8.0: confluence=... jira=... запись=...`.
 
 ## Build
 

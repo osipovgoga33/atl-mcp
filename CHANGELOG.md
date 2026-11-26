@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0] - 2026-11-26
+
+- `conf_label` removes labels: `remove` [] next to `labels` [] (both can be
+  passed in one call). The current labels are read first: a label that is
+  already set is not added again, a label that is not on the page is not
+  removed, and the answer lists both. Removal is
+  `DELETE /rest/api/content/{id}/label?name=...`, one request per label; if one
+  fails, the answer says which labels were already removed.
+- `conf_label` supports `dryRun` (or `dry_run`): current labels and what
+  would be added and removed, without writing.
+- A label in both `labels` and `remove` and a non-numeric `id` are refused
+  before any request.
+
 ## [0.7.0] - 2026-11-25
 
 - Confluence page templates (Space tools -> Templates). Read: `conf_templates`

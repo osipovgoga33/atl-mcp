@@ -439,16 +439,51 @@ func (t *toolset) confUpdate(a args) (string, error) {
 	return fmt.Sprintf("Обновлена страница %s «%s»: version %d → %d\nurl: %s", cur.ID, title, cur.Version.Number, c.Version.Number, t.confURL(c.Links.WebUI)), nil
 }
 
+// pageLabels - текущие метки страницы (имена в нижнем регистре, как хранит Confluence).
+func (t *toolset) pageLabels(id string) ([]string, error) {
+	data, err := t.conf.do("GET", "/rest/api/content/"+id+"/label", url.Values{"limit": {"200"}}, nil)
+	if err != nil {
+		return nil, err
+	}
+	var r struct {
+		Results []struct {
+			Name string `json:"name"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(data, &r); err != nil {
+		return nil, fmt.Errorf("Confluence: метки страницы %s не разобраны: %v", id, err)
+	}
+	out := []string{}
+	for _, l := range r.Results {
+		out = append(out, l.Name)
+	}
+	return out, nil
+}
+
+// confLabel - добавить (labels) и/или снять (remove) метки страницы.
+// Уже стоящие метки не добавляются, отсутствующие не снимаются; dryRun - без записи.
 func (t *toolset) confLabel(a args) (string, error) {
 	id := a.str("id")
-	labels := a.list("labels")
-	if len(labels) == 0 {
-		return "", fmt.Errorf("нужен labels")
+	add, remove := a.list("labels"), a.list("remove")
+	if len(add) == 0 && len(remove) == 0 {
+		return "", fmt.Errorf("нужен labels (добавить) и/или remove (снять)")
 	}
-	for _, l := range labels {
+	inRemove := map[string]bool{}
+	for _, l := range remove {
+		inRemove[strings.ToLower(l)] = true
+	}
+	for _, l := range append(append([]string{}, add...), remove...) {
 		if !reLabel.MatchString(l) {
 			return "", fmt.Errorf("недопустимая метка %q", l)
 		}
+	}
+	for _, l := range add {
+		if inRemove[strings.ToLower(l)] {
+			return "", fmt.Errorf("метка %q и в labels, и в remove", l)
+		}
+	}
+	if !reID.MatchString(id) {
+		return "", fmt.Errorf("нужен id страницы (число)")
 	}
 	cur, err := t.getPage(id, "space")
 	if err != nil {
@@ -457,10 +492,74 @@ func (t *toolset) confLabel(a args) (string, error) {
 	if err := t.spaceWritable(cur.Space.Key); err != nil {
 		return "", err
 	}
-	if err := t.addLabels(cur.ID, labels); err != nil {
+	have, err := t.pageLabels(cur.ID)
+	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("Странице %s добавлены метки: %s", cur.ID, strings.Join(labels, ", ")), nil
+	has := map[string]bool{}
+	for _, l := range have {
+		has[strings.ToLower(l)] = true
+	}
+	var toAdd, toRemove, already, absent []string
+	for _, l := range add {
+		if has[strings.ToLower(l)] {
+			already = append(already, l)
+		} else {
+			toAdd = append(toAdd, l)
+		}
+	}
+	for _, l := range remove {
+		if has[strings.ToLower(l)] {
+			toRemove = append(toRemove, l)
+		} else {
+			absent = append(absent, l)
+		}
+	}
+	list := func(s []string) string {
+		if len(s) == 0 {
+			return "-"
+		}
+		return strings.Join(s, ", ")
+	}
+	tail := ""
+	if len(already) > 0 {
+		tail += "\nуже стоят, не добавлялись: " + list(already)
+	}
+	if len(absent) > 0 {
+		tail += "\nнет на странице, не снимались: " + list(absent)
+	}
+	if a.boolean("dryRun") || a.boolean("dry_run") {
+		return fmt.Sprintf("Сухой прогон, ничего не записано. Страница %s «%s».\nметки сейчас: %s\nдобавились бы: %s\nснялись бы: %s%s",
+			cur.ID, cur.Title, list(have), list(toAdd), list(toRemove), tail), nil
+	}
+	done := []string{}
+	if len(toAdd) > 0 {
+		if err := t.addLabels(cur.ID, toAdd); err != nil {
+			return "", err
+		}
+		done = append(done, "добавлены: "+list(toAdd))
+	}
+	removed := []string{}
+	for _, l := range toRemove {
+		if _, err := t.conf.do("DELETE", "/rest/api/content/"+cur.ID+"/label", url.Values{"name": {l}}, nil); err != nil {
+			msg := fmt.Sprintf("метка %s не снята: %v", l, err)
+			if len(removed) > 0 {
+				msg += "; уже сняты: " + list(removed)
+			}
+			if len(done) > 0 {
+				msg += "; " + strings.Join(done, "; ")
+			}
+			return "", fmt.Errorf("%s", msg)
+		}
+		removed = append(removed, l)
+	}
+	if len(removed) > 0 {
+		done = append(done, "сняты: "+list(removed))
+	}
+	if len(done) == 0 {
+		done = append(done, "менять нечего")
+	}
+	return fmt.Sprintf("Страница %s «%s»: %s%s", cur.ID, cur.Title, strings.Join(done, "; "), tail), nil
 }
 
 var reUserRef = regexp.MustCompile(`<ri:user\s+ri:(userkey|username)="([^"]+)"\s*/>`)
